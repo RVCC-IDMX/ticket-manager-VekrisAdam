@@ -1,24 +1,41 @@
 const chalk = require('chalk');
+const TicketManager = require('./ticketManager');
+const EmailService = require('./emailService');
+const DatabaseService = require('./databaseService');
 
 const { log } = console;
+const { error } = console;
 
-// basic colors
-log(chalk.red('Hey, this is dcode!'));
-log(chalk.magenta('I am magenta'));
-log(chalk.yellow('banana'));
+const ticketManager = new TicketManager(3);
+const emailService = new EmailService();
+const databaseService = new DatabaseService();
 
-// background colors
-log(chalk.bgRed('red background'));
-log(chalk.bgGreen('forest'));
+ticketManager.on('buy', (email, price, timestamp) => {
+  emailService.send(email);
+  databaseService.save(email, price, timestamp);
+});
 
-// styling and decoration
-log(chalk.bold('I am bold'));
-log(chalk.underline('I am underlined'));
+ticketManager.on('error', (anError) => {
+  error(chalk.yellow.underline(`Gracefully handling our error: ${anError}`));
+});
 
-// method chaining
-log(chalk.yellow.bgRed.underline('warning!!!'));
-log(chalk.green.bgWhite.bold('what is happening?'));
+const onBuy = () => {
+  log(chalk.gray.bold.underline('I will be removed soon\n'));
+};
+log(chalk.blue(`We have ${ticketManager.listenerCount('buy')} listener(s) for the buy event\n`));
+log(chalk.blue(`We have ${ticketManager.listenerCount('error')} listener(s) for the error event\n`));
 
-// Hex and RGB
-log(chalk.hex('#009879').bold('dcode green!'));
-log(chalk.rgb(20, 200, 50).bold('I wonder what this will be'));
+ticketManager.on('buy', onBuy);
+
+log(chalk.blue(`We added a new event listener bringing our total count for the buy event to: ${ticketManager.listenerCount('buy')}\n`));
+ticketManager.buy('test@email', 20);
+
+ticketManager.off('buy', onBuy);
+
+log(chalk.blue(`We now have: ${ticketManager.listenerCount('buy')} listener(s) for the buy event\n`));
+ticketManager.buy('test@email', 20);
+
+ticketManager.removeAllListeners('buy');
+log(chalk.blue(`We have ${ticketManager.listenerCount('buy')} listeners for the buy event\n`));
+ticketManager.buy('test@email', 20);
+log(chalk.magentaBright('The last ticket was bought'));
